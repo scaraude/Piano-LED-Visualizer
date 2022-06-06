@@ -7,7 +7,7 @@ import subprocess
 
 import os
 
-from lib.functions import clamp, fastColorWipe, find_value_of, get_note_position
+from lib.functions import clamp, fastColorWipe, find_value_of, get_note_position, is_alternative_key
 from neopixel import Color
 
 import numpy as np
@@ -295,18 +295,20 @@ class LearnMIDI:
                             note_position = get_note_position(
                                 msg.note, self.ledstrip, self.ledsettings)
                             brightness = msg.velocity / 127
+                            alternative_color = int(100) if is_alternative_key(
+                                msg.note) else int(0)
                             if msg.channel == 1:
                                 red = int(
                                     self.hand_colorList[self.hand_colorR][0] * brightness)
                                 green = int(
-                                    self.hand_colorList[self.hand_colorR][1] * brightness)
+                                    (self.hand_colorList[self.hand_colorR][1] + alternative_color) * brightness)
                                 blue = int(
                                     self.hand_colorList[self.hand_colorR][2] * brightness)
                             if msg.channel == 2:
                                 red = int(
                                     self.hand_colorList[self.hand_colorL][0] * brightness)
                                 green = int(
-                                    self.hand_colorList[self.hand_colorL][1] * brightness)
+                                    (self.hand_colorList[self.hand_colorL][1] + alternative_color) * brightness)
                                 blue = int(
                                     self.hand_colorList[self.hand_colorL][2] * brightness)
                             self.ledstrip.strip.setPixelColor(
