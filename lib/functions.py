@@ -1,4 +1,5 @@
 import threading
+from mappers.mappers import map_midi_note_to_literal_note
 from neopixel import *
 import mido
 import datetime
@@ -31,9 +32,13 @@ def find_value_of(value, message):
     return find_between(str(message), value + "=", " ")
 
 
-def get_s_color(hand_colorList, hand_color):
+def is_alternative_key(midi_note):
+    return "#" in map_midi_note_to_literal_note(midi_note)
+
+
+def get_s_color(hand_colorList, hand_color, is_alternative_key):
     red = int(hand_colorList[hand_color][0])
-    green = int(hand_colorList[hand_color][1])
+    green = int(100 if is_alternative_key else hand_colorList[hand_color][1])
     blue = int(hand_colorList[hand_color][2])
     return Color(green, red, blue)
 

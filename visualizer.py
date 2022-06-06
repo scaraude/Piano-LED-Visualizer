@@ -379,13 +379,13 @@ while True:
             if find_value_of("channel", msg) == "12":
                 if ledsettings.skipped_notes != "Finger-based":
                     s_color = get_s_color(
-                        learning.hand_colorList, learning.hand_colorR)
+                        learning.hand_colorList, learning.hand_colorR, is_alternative_key(note))
                     ledstrip.strip.setPixelColor(note_position, s_color)
                     ledstrip.set_adjacent_colors(note_position, s_color, False)
             elif find_value_of("channel", msg) == "11":
                 if ledsettings.skipped_notes != "Finger-based":
                     s_color = get_s_color(
-                        learning.hand_colorList, learning.hand_colorL)
+                        learning.hand_colorList, learning.hand_colorL, is_alternative_key(note))
                     ledstrip.strip.setPixelColor(note_position, s_color)
                     ledstrip.set_adjacent_colors(note_position, s_color, False)
             else:
