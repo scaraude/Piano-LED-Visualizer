@@ -7,7 +7,7 @@ import subprocess
 
 import os
 
-from lib.functions import clamp, fastColorWipe, find_between, get_note_position
+from lib.functions import clamp, fastColorWipe, find_value_of, get_note_position
 from neopixel import Color
 
 import numpy as np
@@ -40,14 +40,16 @@ class LearnMIDI:
         self.notes_time = []
         self.socket_send = []
 
-        self.is_loop_active = int(usersettings.get_setting_value("is_loop_active"))
+        self.is_loop_active = int(
+            usersettings.get_setting_value("is_loop_active"))
 
         self.loadingList = ['', 'Load..', 'Proces', 'Merge', 'Done', 'Error!']
         self.learningList = ['Start', 'Stop']
         self.practiceList = ['Melody', 'Rhythm', 'Listen']
         self.handsList = ['Both', 'Right', 'Left']
         self.mute_handList = ['Off', 'Right', 'Left']
-        self.hand_colorList = ast.literal_eval(usersettings.get_setting_value("hand_colorList"))
+        self.hand_colorList = ast.literal_eval(
+            usersettings.get_setting_value("hand_colorList"))
 
         self.song_tempo = 500000
         self.song_tracks = []
@@ -103,15 +105,19 @@ class LearnMIDI:
     def change_hand_color(self, value, hand):
         if hand == 'RIGHT':
             self.hand_colorR += value
-            self.hand_colorR = clamp(self.hand_colorR, 0, len(self.hand_colorList) - 1)
-            self.usersettings.change_setting_value("hand_colorR", self.hand_colorR)
+            self.hand_colorR = clamp(
+                self.hand_colorR, 0, len(self.hand_colorList) - 1)
+            self.usersettings.change_setting_value(
+                "hand_colorR", self.hand_colorR)
         elif hand == 'LEFT':
             self.hand_colorL += value
-            self.hand_colorL = clamp(self.hand_colorL, 0, len(self.hand_colorList) - 1)
-            self.usersettings.change_setting_value("hand_colorL", self.hand_colorL)
-
+            self.hand_colorL = clamp(
+                self.hand_colorL, 0, len(self.hand_colorList) - 1)
+            self.usersettings.change_setting_value(
+                "hand_colorL", self.hand_colorL)
 
     # Get midi song tempo
+
     def get_tempo(self, mid):
         for msg in mid:  # Search for tempo
             if msg.type == 'set_tempo':
@@ -135,7 +141,6 @@ class LearnMIDI:
                 return False
         except Exception as e:
             print(e)
-
 
     def load_midi(self, song_path):
         while self.loading < 4 and self.loading > 0:
@@ -191,7 +196,7 @@ class LearnMIDI:
             # Save to cache
             with open('Songs/cache/' + song_path + '.p', 'wb') as handle:
                 cache = {'song_tempo': self.song_tempo, 'ticks_per_beat': self.ticks_per_beat,
-                         'notes_time': self.notes_time, 'song_tracks': self.song_tracks,}
+                         'notes_time': self.notes_time, 'song_tracks': self.song_tracks, }
                 pickle.dump(cache, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
             self.loading = 4  # 4 = Done
@@ -199,7 +204,6 @@ class LearnMIDI:
             print(e)
             self.loading = 5  # 5 = Error!
             self.is_loaded_midi.clear()
-
 
     def learn_midi(self):
         loops_count = 0
@@ -240,12 +244,14 @@ class LearnMIDI:
                         break
 
                     # Get time delay
-                    tDelay = mido.tick2second(msg.time, self.ticks_per_beat, self.song_tempo * 100 / self.set_tempo)
+                    tDelay = mido.tick2second(
+                        msg.time, self.ticks_per_beat, self.song_tempo * 100 / self.set_tempo)
 
                     # Check notes to press
                     if not msg.is_meta:
                         try:
-                            self.socket_send.append(self.notes_time[self.current_idx])
+                            self.socket_send.append(
+                                self.notes_time[self.current_idx])
                         except Exception as e:
                             print(e)
                         self.current_idx += 1
@@ -255,11 +261,12 @@ class LearnMIDI:
                             notes_pressed = []
                             while not set(notes_to_press).issubset(notes_pressed) and self.is_started_midi:
                                 for msg_in in self.midiports.inport.iter_pending():
-                                    note = int(find_between(str(msg_in), "note=", " "))
+                                    note = int(find_value_of("note", msg_in))
                                     if "note_off" in str(msg_in):
                                         velocity = 0
                                     else:
-                                        velocity = int(find_between(str(msg_in), "velocity=", " "))
+                                        velocity = int(
+                                            find_value_of("velocity", msg_in))
                                     if velocity > 0:
                                         if note not in notes_pressed:
                                             notes_pressed.append(note)
@@ -270,12 +277,14 @@ class LearnMIDI:
                                             pass  # do nothing
 
                             # Turn off the pressed LEDs
-                            fastColorWipe(self.ledstrip.strip, True, self.ledsettings)  # ideally clear only pressed notes!
+                            # ideally clear only pressed notes!
+                            fastColorWipe(self.ledstrip.strip,
+                                          True, self.ledsettings)
                             notes_to_press.clear()
 
                     # Realize time delay, consider also the time lost during computation
                     delay = max(0, tDelay - (
-                            time.time() - time_prev) - 0.003)  # 0.003 sec calibratable to acount for extra time loss
+                        time.time() - time_prev) - 0.003)  # 0.003 sec calibratable to acount for extra time loss
                     time.sleep(delay)
                     time_prev = time.time()
 
@@ -283,17 +292,25 @@ class LearnMIDI:
                     if not msg.is_meta:
                         # Calculate note position on the strip and display
                         if msg.type == 'note_on' or msg.type == 'note_off':
-                            note_position = get_note_position(msg.note, self.ledstrip, self.ledsettings)
+                            note_position = get_note_position(
+                                msg.note, self.ledstrip, self.ledsettings)
                             brightness = msg.velocity / 127
                             if msg.channel == 1:
-                                red = int(self.hand_colorList[self.hand_colorR][0] * brightness)
-                                green = int(self.hand_colorList[self.hand_colorR][1] * brightness)
-                                blue = int(self.hand_colorList[self.hand_colorR][2] * brightness)
+                                red = int(
+                                    self.hand_colorList[self.hand_colorR][0] * brightness)
+                                green = int(
+                                    self.hand_colorList[self.hand_colorR][1] * brightness)
+                                blue = int(
+                                    self.hand_colorList[self.hand_colorR][2] * brightness)
                             if msg.channel == 2:
-                                red = int(self.hand_colorList[self.hand_colorL][0] * brightness)
-                                green = int(self.hand_colorList[self.hand_colorL][1] * brightness)
-                                blue = int(self.hand_colorList[self.hand_colorL][2] * brightness)
-                            self.ledstrip.strip.setPixelColor(note_position, Color(green, red, blue))
+                                red = int(
+                                    self.hand_colorList[self.hand_colorL][0] * brightness)
+                                green = int(
+                                    self.hand_colorList[self.hand_colorL][1] * brightness)
+                                blue = int(
+                                    self.hand_colorList[self.hand_colorL][2] * brightness)
+                            self.ledstrip.strip.setPixelColor(
+                                note_position, Color(green, red, blue))
                             self.ledstrip.strip.show()
 
                         # Save notes to press
@@ -306,7 +323,7 @@ class LearnMIDI:
                                 self.hands == 1 and self.mute_hand != 2 and msg.channel == 2) or
                                 # send midi sound for Left hand
                                 (
-                                        self.hands == 2 and self.mute_hand != 1 and msg.channel == 1) or
+                            self.hands == 2 and self.mute_hand != 1 and msg.channel == 1) or
                                 # send midi sound for Right hand
                                 self.practice == 2):  # send midi sound for Listen only
                             self.midiports.playport.send(msg)
@@ -320,9 +337,10 @@ class LearnMIDI:
         if not os.path.isfile('Songs/' + midi_file.replace(".mid", ".abc")):
             #subprocess.call(['midi2abc',  'Songs/' + midi_file, '-o', 'Songs/' + midi_file.replace(".mid", ".abc")])
             try:
-                subprocess.check_output(['midi2abc',  'Songs/' + midi_file, '-o', 'Songs/' + midi_file.replace(".mid", ".abc")])
+                subprocess.check_output(
+                    ['midi2abc',  'Songs/' + midi_file, '-o', 'Songs/' + midi_file.replace(".mid", ".abc")])
             except Exception as e:
-                #check if e contains the string 'No such file or directory'
+                # check if e contains the string 'No such file or directory'
                 if 'No such file or directory' in str(e):
                     print("Midiabc not found, installing...")
                     self.install_midi2abc()
@@ -333,4 +351,3 @@ class LearnMIDI:
     def install_midi2abc(self):
         print("Installing abcmidi")
         subprocess.call(['sudo', 'apt-get', 'install', 'abcmidi', '-y'])
-

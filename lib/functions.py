@@ -40,7 +40,7 @@ def is_alternative_key(midi_note):
 
 def get_s_color(hand_colorList, hand_color, is_alternative_key):
     red = int(hand_colorList[hand_color][0])
-    green = int(100 if is_alternative_key else hand_colorList[hand_color][1])
+    green = int(hand_colorList[hand_color][1])
     blue = int(hand_colorList[hand_color][2])
     return Color(green, red, blue)
 
