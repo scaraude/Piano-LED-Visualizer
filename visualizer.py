@@ -159,7 +159,7 @@ while True:
             menu.show()
             ledsettings = LedSettings(usersettings)
 
-    handle_GPIO_interface(midiports, menu, ledsettings, usersettings, ledstrip)
+    handle_GPIO_interface(midiports, menu, ledstrip, ledsettings, usersettings)
 
     red = ledsettings.get_color("Red")
     green = ledsettings.get_color("Green")
