@@ -11,6 +11,8 @@ from lib.midiports import MidiPorts
 from lib.savemidi import SaveMIDI
 from lib.usersettings import UserSettings
 from lib.functions import *
+from lib.ledanimations import *
+from constants import *
 from neopixel import *
 import argparse
 import threading
@@ -23,6 +25,7 @@ os.chdir(sys.path[0])
 
 # Ensure there is only one instance of the script running.
 fh = 0
+
 
 def singleton():
     global fh
@@ -41,12 +44,18 @@ def restart_script():
 singleton()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
-parser.add_argument('-d', '--display', type=str, help="choose type of display: '1in44' (default) | '1in3'")
-parser.add_argument('-f', '--fontdir', type=str, help="Use an alternate directory for fonts")
-parser.add_argument('-p', '--port', type=int, help="set port for webinterface (80 is default)")
-parser.add_argument('-s', '--skipupdate', action='store_true', help="Do not try to update /usr/local/bin/connectall.py")
-parser.add_argument('-w', '--webinterface', help="disable webinterface: 'true' (default) | 'false'")
+parser.add_argument('-c', '--clear', action='store_true',
+                    help='clear the display on exit')
+parser.add_argument('-d', '--display', type=str,
+                    help="choose type of display: '1in44' (default) | '1in3'")
+parser.add_argument('-f', '--fontdir', type=str,
+                    help="Use an alternate directory for fonts")
+parser.add_argument('-p', '--port', type=int,
+                    help="set port for webinterface (80 is default)")
+parser.add_argument('-s', '--skipupdate', action='store_true',
+                    help="Do not try to update /usr/local/bin/connectall.py")
+parser.add_argument('-w', '--webinterface',
+                    help="disable webinterface: 'true' (default) | 'false'")
 args = parser.parse_args()
 
 print(args)
@@ -54,20 +63,12 @@ print(args)
 if not args.skipupdate:
     # make sure connectall.py file exists and is updated
     if not os.path.exists('/usr/local/bin/connectall.py') or \
-        filecmp.cmp('/usr/local/bin/connectall.py', 'connectall.py') is not True:
+            filecmp.cmp('/usr/local/bin/connectall.py', 'connectall.py') is not True:
         print("connectall.py script is outdated, updating...")
         copyfile('connectall.py', '/usr/local/bin/connectall.py')
         os.chmod('/usr/local/bin/connectall.py', 493)
 
-KEYRIGHT = 26
-KEYLEFT = 5
-KEYUP = 6
-KEYDOWN = 19
-KEY1 = 21
-KEY2 = 20
-KEY3 = 16
-JPRESS = 13
-BACKLIGHT = 24
+
 # pin numbers are interpreted as BCM pin numbers.
 GPIO.setmode(GPIO.BCM)
 # Sets the pin as input and sets Pull-up mode for the pin.
@@ -86,7 +87,8 @@ ledsettings = LedSettings(usersettings)
 ledstrip = LedStrip(usersettings, ledsettings)
 learning = LearnMIDI(usersettings, ledsettings, midiports, ledstrip)
 saving = SaveMIDI()
-menu = MenuLCD("menu.xml", args, usersettings, ledsettings, ledstrip, learning, saving, midiports)
+menu = MenuLCD("menu.xml", args, usersettings, ledsettings,
+               ledstrip, learning, saving, midiports)
 
 midiports.add_instance(menu)
 ledsettings.add_instance(menu, ledstrip)
@@ -124,8 +126,9 @@ def start_webserver():
     #webinterface.run(use_reloader=False, debug=False, port=80, host='0.0.0.0')
     serve(webinterface, host='0.0.0.0', port=args.port)
 
+
 if args.webinterface != "false":
-    print ("Starting webinterface")
+    print("Starting webinterface")
     processThread = threading.Thread(target=start_webserver, daemon=True)
     processThread.start()
 
@@ -151,59 +154,12 @@ while True:
         if usersettings.pending_reset:
             usersettings.pending_reset = False
             ledstrip = LedStrip(usersettings, ledsettings)
-            menu = MenuLCD("menu.xml", args, usersettings, ledsettings, ledstrip, learning, saving, midiports)
+            menu = MenuLCD("menu.xml", args, usersettings,
+                           ledsettings, ledstrip, learning, saving, midiports)
             menu.show()
             ledsettings = LedSettings(usersettings)
 
-    if GPIO.input(KEYUP) == 0:
-        midiports.last_activity = time.time()
-        menu.change_pointer(0)
-        while GPIO.input(KEYUP) == 0:
-            time.sleep(0.001)
-    if GPIO.input(KEYDOWN) == 0:
-        midiports.last_activity = time.time()
-        menu.change_pointer(1)
-        while GPIO.input(KEYDOWN) == 0:
-            time.sleep(0.001)
-    if GPIO.input(KEY1) == 0:
-        midiports.last_activity = time.time()
-        menu.enter_menu()
-        while GPIO.input(KEY1) == 0:
-            time.sleep(0.001)
-    if GPIO.input(KEY2) == 0:
-        midiports.last_activity = time.time()
-        menu.go_back()
-        if not menu.screensaver_is_running:
-            fastColorWipe(ledstrip.strip, True, ledsettings)
-        while GPIO.input(KEY2) == 0:
-            time.sleep(0.01)
-    if GPIO.input(KEY3) == 0:
-        midiports.last_activity = time.time()
-        if ledsettings.sequence_active == True:
-            ledsettings.set_sequence(0, 1)
-        else:
-            active_input = usersettings.get_setting_value("input_port")
-            secondary_input = usersettings.get_setting_value("secondary_input_port")
-            midiports.change_port("inport", secondary_input)
-            usersettings.change_setting_value("secondary_input_port", active_input)
-            usersettings.change_setting_value("input_port", secondary_input)
-            fastColorWipe(ledstrip.strip, True, ledsettings)
-
-        while GPIO.input(KEY3) == 0:
-            time.sleep(0.01)
-    if GPIO.input(KEYLEFT) == 0:
-        midiports.last_activity = time.time()
-        menu.change_value("LEFT")
-        time.sleep(0.1)
-    if GPIO.input(KEYRIGHT) == 0:
-        midiports.last_activity = time.time()
-        menu.change_value("RIGHT")
-        time.sleep(0.1)
-    if GPIO.input(JPRESS) == 0:
-        midiports.last_activity = time.time()
-        menu.speed_change()
-        while GPIO.input(JPRESS) == 0:
-            time.sleep(0.01)
+    handle_GPIO_interface(midiports, menu, ledsettings, usersettings, ledstrip)
 
     red = ledsettings.get_color("Red")
     green = ledsettings.get_color("Green")
@@ -225,15 +181,17 @@ while True:
             if int(note) > 0:
                 if ledsettings.color_mode == "Rainbow":
                     red = get_rainbow_colors(int((int(n) + ledsettings.rainbow_offset + int(timeshift)) * (
-                            float(ledsettings.rainbow_scale) / 100)) & 255, "red")
+                        float(ledsettings.rainbow_scale) / 100)) & 255, "red")
                     green = get_rainbow_colors(int((int(n) + ledsettings.rainbow_offset + int(timeshift)) * (
-                            float(ledsettings.rainbow_scale) / 100)) & 255, "green")
+                        float(ledsettings.rainbow_scale) / 100)) & 255, "green")
                     blue = get_rainbow_colors(int((int(n) + ledsettings.rainbow_offset + int(timeshift)) * (
-                            float(ledsettings.rainbow_scale) / 100)) & 255, "blue")
+                        float(ledsettings.rainbow_scale) / 100)) & 255, "blue")
 
                     if int(note) == 1001:
-                        ledstrip.strip.setPixelColor(n, Color(int(green), int(red), int(blue)))
-                        ledstrip.set_adjacent_colors(n, Color(int(green), int(red), int(blue)), False)
+                        ledstrip.strip.setPixelColor(
+                            n, Color(int(green), int(red), int(blue)))
+                        ledstrip.set_adjacent_colors(
+                            n, Color(int(green), int(red), int(blue)), False)
 
                 if ledsettings.color_mode == "Speed":
                     speed_colors = ledsettings.speed_get_colors()
@@ -262,7 +220,8 @@ while True:
                                                           int(int(blue) * fading)))
                     ledstrip.set_adjacent_colors(n, Color(int(int(green) * fading), int(int(red) * fading),
                                                           int(int(blue) * fading)), False)
-                    ledstrip.keylist[n] = ledstrip.keylist[n] - ledsettings.fadingspeed
+                    ledstrip.keylist[n] = ledstrip.keylist[n] - \
+                        ledsettings.fadingspeed
                     if ledstrip.keylist[n] <= 0:
                         red_fading = int(ledsettings.get_backlight_color("Red")) * float(
                             ledsettings.backlight_brightness_percent) / 100
@@ -270,7 +229,8 @@ while True:
                             ledsettings.backlight_brightness_percent) / 100
                         blue_fading = int(ledsettings.get_backlight_color("Blue")) * float(
                             ledsettings.backlight_brightness_percent) / 100
-                        color = Color(int(green_fading), int(red_fading), int(blue_fading))
+                        color = Color(int(green_fading), int(
+                            red_fading), int(blue_fading))
                         ledstrip.strip.setPixelColor(n, color)
                         ledstrip.set_adjacent_colors(n, color, False)
                 else:
@@ -285,7 +245,8 @@ while True:
                             ledsettings.backlight_brightness_percent) / 100
                         blue_fading = int(ledsettings.get_backlight_color("Blue")) * float(
                             ledsettings.backlight_brightness_percent) / 100
-                        color = Color(int(green_fading), int(red_fading), int(blue_fading))
+                        color = Color(int(green_fading), int(
+                            red_fading), int(blue_fading))
                         ledstrip.strip.setPixelColor(n, color)
                         ledstrip.set_adjacent_colors(n, color, False)
                         ledstrip.keylist[n] = 0
@@ -300,25 +261,25 @@ while True:
     # loop through incoming midi messages
     for msg in midiports.midipending:
 
-        #webinterface.socket_input.append(msg)
+        # webinterface.socket_input.append(msg)
 
         midiports.last_activity = time.time()
-        note = find_between(str(msg), "note=", " ")
+        note = find_value_of("note", msg)
         original_note = note
         note = int(note)
         if "note_off" in str(msg):
             velocity = 0
         else:
-            velocity = find_between(str(msg), "velocity=", " ")
+            velocity = find_value_of("velocity", msg)
 
-        control_change = find_between(str(msg), "value=", " ")
+        control_change = find_value_of("value", msg)
         if control_change:
             last_control_change = control_change
 
             if ledsettings.sequence_active:
 
-                control = find_between(str(msg), "control=", " ")
-                value = find_between(str(msg), "value=", " ")
+                control = find_value_of("control", msg)
+                value = find_value_of("value", msg)
                 try:
                     if "+" in ledsettings.next_step:
                         if int(value) > int(ledsettings.next_step) and control == ledsettings.control_number:
@@ -339,11 +300,11 @@ while True:
 
         if ledsettings.color_mode == "Rainbow":
             red = get_rainbow_colors(int((int(note_position) + ledsettings.rainbow_offset + int(timeshift)) * (
-                    float(ledsettings.rainbow_scale) / 100)) & 255, "red")
+                float(ledsettings.rainbow_scale) / 100)) & 255, "red")
             green = get_rainbow_colors(int((int(note_position) + ledsettings.rainbow_offset + int(timeshift)) * (
-                    float(ledsettings.rainbow_scale) / 100)) & 255, "green")
+                float(ledsettings.rainbow_scale) / 100)) & 255, "green")
             blue = get_rainbow_colors(int((int(note_position) + ledsettings.rainbow_offset + int(timeshift)) * (
-                    float(ledsettings.rainbow_scale) / 100)) & 255, "blue")
+                float(ledsettings.rainbow_scale) / 100)) & 255, "blue")
 
         if ledsettings.color_mode == "Speed":
             speed_colors = ledsettings.speed_get_colors()
@@ -358,13 +319,15 @@ while True:
             blue = gradient_colors[2]
 
         if ledsettings.color_mode == "Scale":
-            scale_colors = get_scale_color(ledsettings.scale_key, note, ledsettings)
+            scale_colors = get_scale_color(
+                ledsettings.scale_key, note, ledsettings)
             red = scale_colors[0]
             green = scale_colors[1]
             blue = scale_colors[2]
             ledstrip.keylist_color[note_position] = scale_colors
 
-        if int(velocity) == 0 and int(note) > 0 and ledsettings.mode != "Disabled":  # when a note is lifted (off)
+        # when a note is lifted (off)
+        if int(velocity) == 0 and int(note) > 0 and ledsettings.mode != "Disabled":
             ledstrip.keylist_status[note_position] = 0
             if ledsettings.mode == "Fading":
                 ledstrip.keylist[note_position] = 1000
@@ -379,18 +342,25 @@ while True:
                         ledsettings.get_backlight_color("Green")) * ledsettings.backlight_brightness_percent / 100
                     blue_backlight = int(
                         ledsettings.get_backlight_color("Blue")) * ledsettings.backlight_brightness_percent / 100
-                    color_backlight = Color(int(green_backlight), int(red_backlight), int(blue_backlight))
-                    ledstrip.strip.setPixelColor(note_position, color_backlight)
-                    ledstrip.set_adjacent_colors(note_position, color_backlight, True)
+                    color_backlight = Color(int(green_backlight), int(
+                        red_backlight), int(blue_backlight))
+                    ledstrip.strip.setPixelColor(
+                        note_position, color_backlight)
+                    ledstrip.set_adjacent_colors(
+                        note_position, color_backlight, True)
                 else:
                     ledstrip.strip.setPixelColor(note_position, Color(0, 0, 0))
-                    ledstrip.set_adjacent_colors(note_position, Color(0, 0, 0), False)
+                    ledstrip.set_adjacent_colors(
+                        note_position, Color(0, 0, 0), False)
             if saving.isrecording:
-                saving.add_track("note_off", original_note, velocity, midiports.last_activity)
-        elif int(velocity) > 0 and int(note) > 0 and ledsettings.mode != "Disabled":  # when a note is pressed
+                saving.add_track("note_off", original_note,
+                                 velocity, midiports.last_activity)
+        # when a note is pressed
+        elif int(velocity) > 0 and int(note) > 0 and ledsettings.mode != "Disabled":
             ledsettings.speed_add_note()
             if ledsettings.color_mode == "Multicolor":
-                choosen_color = ledsettings.get_random_multicolor_in_range(note)
+                choosen_color = ledsettings.get_random_multicolor_in_range(
+                    note)
                 red = choosen_color[0]
                 green = choosen_color[1]
                 blue = choosen_color[2]
@@ -405,26 +375,23 @@ while True:
                 ledstrip.keylist[note_position] = 1001
             if ledsettings.mode == "Velocity":
                 ledstrip.keylist[note_position] = 1000 / float(brightness)
-            if find_between(str(msg), "channel=", " ") == "12":
+
+            if find_value_of("channel", msg) == "12":
                 if ledsettings.skipped_notes != "Finger-based":
-                    red = int(learning.hand_colorList[learning.hand_colorR][0])
-                    green = int(learning.hand_colorList[learning.hand_colorR][1])
-                    blue = int(learning.hand_colorList[learning.hand_colorR][2])
-                    s_color = Color(green, red, blue)
+                    s_color = get_s_color(
+                        learning.hand_colorList, learning.hand_colorR)
                     ledstrip.strip.setPixelColor(note_position, s_color)
                     ledstrip.set_adjacent_colors(note_position, s_color, False)
-            elif find_between(str(msg), "channel=", " ") == "11":
+            elif find_value_of("channel", msg) == "11":
                 if ledsettings.skipped_notes != "Finger-based":
-                    red = int(learning.hand_colorList[learning.hand_colorL][0])
-                    green = int(learning.hand_colorList[learning.hand_colorL][1])
-                    blue = int(learning.hand_colorList[learning.hand_colorL][2])
-                    s_color = Color(green, red, blue)
+                    s_color = get_s_color(
+                        learning.hand_colorList, learning.hand_colorL)
                     ledstrip.strip.setPixelColor(note_position, s_color)
                     ledstrip.set_adjacent_colors(note_position, s_color, False)
             else:
                 if ledsettings.skipped_notes != "Normal":
                     s_color = Color(int(int(green) / float(brightness)), int(int(red) / float(brightness)),
-                                   int(int(blue) / float(brightness)))
+                                    int(int(blue) / float(brightness)))
                     ledstrip.strip.setPixelColor(note_position, s_color)
                     ledstrip.set_adjacent_colors(note_position, s_color, False)
             if saving.isrecording:
@@ -432,12 +399,14 @@ while True:
                     saving.add_track("note_on", original_note, velocity, midiports.last_activity,
                                      wc.rgb_to_hex((red, green, blue)))
                 else:
-                    saving.add_track("note_on", original_note, velocity, midiports.last_activity)
+                    saving.add_track("note_on", original_note,
+                                     velocity, midiports.last_activity)
         else:
-            control = find_between(str(msg), "control=", " ")
-            value = find_between(str(msg), "value=", " ")
+            control = find_value_of("control", msg)
+            value = find_value_of("value", msg)
             if saving.isrecording:
-                saving.add_control_change("control_change", 0, control, value, midiports.last_activity)
+                saving.add_control_change(
+                    "control_change", 0, control, value, midiports.last_activity)
         saving.restart_time()
         if len(saving.is_playing_midi) > 0:
             midiports.pending_queue.remove(msg)
