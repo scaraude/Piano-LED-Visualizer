@@ -116,20 +116,6 @@ class LearnMIDI:
             self.usersettings.change_setting_value(
                 "hand_colorL", self.hand_colorL)
 
-    # Get midi song tempo
-
-    def get_tempo(self, mid):
-        for msg in mid:  # Search for tempo
-            try:
-                print("into try catch")
-                print("msg" + msg)
-                if hasattr(msg, "is_meta") and msg.is_meta and hasattr(msg, "msg.type") and msg.type == 'set_tempo':
-                    return msg.tempo
-            except:
-                print("midi msg is not readable")
-                print(msg)
-        return 500000  # If not found return default tempo
-
     def load_song_from_cache(self, song_path):
         # Load song from cache
         try:
@@ -173,8 +159,6 @@ class LearnMIDI:
             print("after loading")
 
             # Get tempo and Ticks per beat
-            self.song_tempo = self.get_tempo(mid)
-            print("after get tempo")
             self.ticks_per_beat = mid.ticks_per_beat
             print("after get ticks per beat")
 
@@ -256,6 +240,10 @@ class LearnMIDI:
                     # Get time delay
                     tDelay = mido.tick2second(
                         msg.time, self.ticks_per_beat, self.song_tempo * 100 / self.set_tempo)
+
+                    if msg.is_meta:
+                        if msg.type == 'set_tempo':
+                            self.song_tempo = msg.tempo
 
                     # Check notes to press
                     if not msg.is_meta:
