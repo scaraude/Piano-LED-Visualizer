@@ -121,7 +121,9 @@ class LearnMIDI:
     def get_tempo(self, mid):
         for msg in mid:  # Search for tempo
             try:
-                if msg.is_meta and msg.type == 'set_tempo':
+                print("into try catch")
+                print("msg" + msg)
+                if hasattr(msg, "is_meta") and msg.is_meta and hasattr(msg, "msg.type") and msg.type == 'set_tempo':
                     return msg.tempo
             except:
                 print("midi msg is not readable")
