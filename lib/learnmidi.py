@@ -120,13 +120,12 @@ class LearnMIDI:
 
     def get_tempo(self, mid):
         for msg in mid:  # Search for tempo
-            if msg.is_meta:
-                print("msg.is_meta")
-                if hasattr(msg, "type"):
-                    print('hasattr(msg, "type")')
-                    if msg.type == 'set_tempo':
-                        print("msg.type == 'set_tempo'")
-                        return msg.tempo
+            try:
+                if msg.is_meta and msg.type == 'set_tempo':
+                    return msg.tempo
+            except:
+                print("midi msg is not readable")
+                print(msg)
         return 500000  # If not found return default tempo
 
     def load_song_from_cache(self, song_path):
