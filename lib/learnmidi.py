@@ -134,6 +134,11 @@ class LearnMIDI:
         except Exception as e:
             print(e)
 
+    def clean_midi(self, mid):
+        for msg in mid:
+            print(msg)
+        return mid
+
     def load_midi(self, song_path):
         while self.loading < 4 and self.loading > 0:
             time.sleep(1)
@@ -155,9 +160,10 @@ class LearnMIDI:
         try:
             # Load the midi file
             print("before loading")
-            mid = mido.MidiFile('Songs/' + song_path)
+            durty_mid = mido.MidiFile('Songs/' + song_path)
             print("after loading")
 
+            mid = self.clean_midi(durty_mid)
             # Get tempo and Ticks per beat
             self.ticks_per_beat = mid.ticks_per_beat
             print("after get ticks per beat")
