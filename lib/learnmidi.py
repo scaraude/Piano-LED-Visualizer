@@ -162,11 +162,15 @@ class LearnMIDI:
 
         try:
             # Load the midi file
+            print("before loading")
             mid = mido.MidiFile('Songs/' + song_path)
+            print("after loading")
 
             # Get tempo and Ticks per beat
             self.song_tempo = self.get_tempo(mid)
+            print("after get tempo")
             self.ticks_per_beat = mid.ticks_per_beat
+            print("after get ticks per beat")
 
             # Assign Tracks to different channels before merging to know the message origin
             self.loading = 2  # 2 = Proces
