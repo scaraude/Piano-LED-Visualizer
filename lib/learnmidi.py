@@ -120,7 +120,7 @@ class LearnMIDI:
 
     def get_tempo(self, mid):
         for msg in mid:  # Search for tempo
-            if msg.is_meta and msg.type == 'set_tempo':
+            if msg.is_meta and hasattr(msg, "type") and msg.type == 'set_tempo':
                 return msg.tempo
         return 500000  # If not found return default tempo
 
