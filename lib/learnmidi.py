@@ -8,6 +8,7 @@ import subprocess
 import os
 
 from lib.functions import clamp, fastColorWipe, find_value_of, get_note_position, is_alternative_key
+from lib.utils.utils import print_10_messages
 from neopixel import Color
 
 import numpy as np
@@ -174,6 +175,8 @@ class LearnMIDI:
             # Assign Tracks to different channels before merging to know the message origin
             self.loading = 2  # 2 = Proces
             print("loading...")
+            print_10_messages(mid.tracks[0])
+            print_10_messages(mid.tracks[1])
             if len(mid.tracks) == 2:  # check if the midi file has only 2 Tracks
                 offset = 1
             else:
@@ -184,6 +187,8 @@ class LearnMIDI:
                         msg.channel = k + offset
                         if msg.type == 'note_off':
                             msg.velocity = 0
+            print_10_messages(mid.tracks[0])
+            print_10_messages(mid.tracks[1])
 
             # Merge tracks
             self.loading = 3  # 3 = Merge
