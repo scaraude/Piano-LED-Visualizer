@@ -189,14 +189,22 @@ class LearnMIDI:
             self.loading = 3  # 3 = Merge
             print("merge...")
             self.song_tracks = mido.merge_tracks(mid.tracks)
+            print("--> merge_tracks")
             time_passed = 0
+            print("--> time_passed")
             self.notes_time.clear()
+            print("--> notes_time.clear")
             for msg in mid:
+                print("ooo into for loop")
                 if not msg.is_meta:
+                    print("= not msg.is_meta")
                     time_passed += msg.time
+                    print("= time_passed")
                     self.notes_time.append(time_passed)
+                    print("--> notes_time.append")
 
             fastColorWipe(self.ledstrip.strip, True, self.ledsettings)
+            print("--> fastColorWipe")
 
             # Save to cache
             print("Save to cache...")
