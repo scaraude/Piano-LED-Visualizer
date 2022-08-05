@@ -134,10 +134,12 @@ class LearnMIDI:
         except Exception as e:
             print(e)
 
-    def clean_midi(self, mid):
-        for msg in mid:
-            print(msg)
-        return mid
+    def get_tempo(self, mid):
+        for i, track in enumerate(mid.tracks):  # Search for tempo
+            for msg in track:
+                if msg.is_meta and msg.type == 'set_tempo':
+                    return msg.tempo
+        return 500000  # If not found return default tempo
 
     def load_midi(self, song_path):
         while self.loading < 4 and self.loading > 0:
@@ -160,11 +162,12 @@ class LearnMIDI:
         try:
             # Load the midi file
             print("before loading")
-            durty_mid = mido.MidiFile('Songs/' + song_path)
+            mid = mido.MidiFile('Songs/' + song_path)
             print("after loading")
 
-            mid = self.clean_midi(durty_mid)
             # Get tempo and Ticks per beat
+            self.song_tempo = self.get_tempo(mid)
+            print("after get_tempo")
             self.ticks_per_beat = mid.ticks_per_beat
             print("after get ticks per beat")
 
@@ -247,9 +250,9 @@ class LearnMIDI:
                     tDelay = mido.tick2second(
                         msg.time, self.ticks_per_beat, self.song_tempo * 100 / self.set_tempo)
 
-                    if msg.is_meta:
-                        if msg.type == 'set_tempo':
-                            self.song_tempo = msg.tempo
+                    # set tempo
+                    if msg.is_meta and msg.type == 'set_tempo':
+                        self.song_tempo = msg.tempo
 
                     # Check notes to press
                     if not msg.is_meta:
