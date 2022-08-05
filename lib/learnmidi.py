@@ -173,6 +173,7 @@ class LearnMIDI:
 
             # Assign Tracks to different channels before merging to know the message origin
             self.loading = 2  # 2 = Proces
+            print("loading...")
             if len(mid.tracks) == 2:  # check if the midi file has only 2 Tracks
                 offset = 1
             else:
@@ -186,6 +187,7 @@ class LearnMIDI:
 
             # Merge tracks
             self.loading = 3  # 3 = Merge
+            print("merge...")
             self.song_tracks = mido.merge_tracks(mid.tracks)
             time_passed = 0
             self.notes_time.clear()
@@ -197,11 +199,13 @@ class LearnMIDI:
             fastColorWipe(self.ledstrip.strip, True, self.ledsettings)
 
             # Save to cache
+            print("Save to cache...")
             with open('Songs/cache/' + song_path + '.p', 'wb') as handle:
                 cache = {'song_tempo': self.song_tempo, 'ticks_per_beat': self.ticks_per_beat,
                          'notes_time': self.notes_time, 'song_tracks': self.song_tracks, }
                 pickle.dump(cache, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+            print("Done !!")
             self.loading = 4  # 4 = Done
         except Exception as e:
             print(e)
