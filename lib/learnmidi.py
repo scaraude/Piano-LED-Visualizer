@@ -21,6 +21,20 @@ def find_nearest(array, target):
     return idx
 
 
+def not_unkwons_meta_message_filter(message):
+    return not message.is_meta or message.type != 'unknown_meta'
+
+
+def remove_unknown_meta_messages(track):
+    return mido.MidiTrack(list(
+        filter(not_unkwons_meta_message_filter, track)))
+
+
+def clean_midi(mid):
+    mid.tracks = list(map(remove_unknown_meta_messages, mid.tracks))
+    return mid
+
+
 class LearnMIDI:
     def __init__(self, usersettings, ledsettings, midiports, ledstrip):
         self.usersettings = usersettings
@@ -162,21 +176,14 @@ class LearnMIDI:
 
         try:
             # Load the midi file
-            print("before loading")
             mid = mido.MidiFile('Songs/' + song_path)
-            print("after loading")
 
             # Get tempo and Ticks per beat
             self.song_tempo = self.get_tempo(mid)
-            print("after get_tempo")
             self.ticks_per_beat = mid.ticks_per_beat
-            print("after get ticks per beat")
 
             # Assign Tracks to different channels before merging to know the message origin
             self.loading = 2  # 2 = Proces
-            print("loading...")
-            print_10_messages(mid.tracks[0])
-            print_10_messages(mid.tracks[1])
             if len(mid.tracks) == 2:  # check if the midi file has only 2 Tracks
                 offset = 1
             else:
@@ -187,29 +194,19 @@ class LearnMIDI:
                         msg.channel = k + offset
                         if msg.type == 'note_off':
                             msg.velocity = 0
-            print_10_messages(mid.tracks[0])
-            print_10_messages(mid.tracks[1])
 
             # Merge tracks
             self.loading = 3  # 3 = Merge
-            print("merge...")
+            mid = clean_midi(mid)
             self.song_tracks = mido.merge_tracks(mid.tracks)
-            print("--> merge_tracks")
             time_passed = 0
-            print("--> time_passed")
             self.notes_time.clear()
-            print("--> notes_time.clear")
             for msg in mid:
-                print("ooo into for loop")
                 if not msg.is_meta:
-                    print("= not msg.is_meta")
                     time_passed += msg.time
-                    print("= time_passed")
                     self.notes_time.append(time_passed)
-                    print("--> notes_time.append")
 
             fastColorWipe(self.ledstrip.strip, True, self.ledsettings)
-            print("--> fastColorWipe")
 
             # Save to cache
             print("Save to cache...")
