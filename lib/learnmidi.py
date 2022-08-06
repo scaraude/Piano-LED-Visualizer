@@ -131,6 +131,15 @@ class LearnMIDI:
             self.usersettings.change_setting_value(
                 "hand_colorL", self.hand_colorL)
 
+    def get_led_color(handColors, brightness, alternative_color):
+        red = int(
+            handColors[0] * brightness)
+        green = int(
+            (handColors[1] + alternative_color) * brightness)
+        blue = int(
+            handColors[2] * brightness)
+        return red, green, blue
+
     def load_song_from_cache(self, song_path):
         # Load song from cache
         try:
@@ -327,19 +336,12 @@ class LearnMIDI:
                             alternative_color = int(100) if is_alternative_key(
                                 msg.note) else int(0)
                             if msg.channel == 1:
-                                red = int(
-                                    self.hand_colorList[self.hand_colorR][0] * brightness)
-                                green = int(
-                                    (self.hand_colorList[self.hand_colorR][1] + alternative_color) * brightness)
-                                blue = int(
-                                    self.hand_colorList[self.hand_colorR][2] * brightness)
+                                red, green, blue = self.get_led_color(
+                                    self.hand_colorList[self.hand_colorR], brightness, alternative_color)
                             if msg.channel == 2:
-                                red = int(
-                                    self.hand_colorList[self.hand_colorL][0] * brightness)
-                                green = int(
-                                    (self.hand_colorList[self.hand_colorL][1] + alternative_color) * brightness)
-                                blue = int(
-                                    self.hand_colorList[self.hand_colorL][2] * brightness)
+                                red, green, blue = self.get_led_color(
+                                    self.hand_colorList[self.hand_colorL], brightness, alternative_color)
+
                             self.ledstrip.strip.setPixelColor(
                                 note_position, Color(green, red, blue))
                             self.ledstrip.strip.show()
