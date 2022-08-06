@@ -255,7 +255,10 @@ class LearnMIDI:
 
                 self.current_idx = start_idx
 
+                print("Start learning from track " +
+                      str(start_idx) + " to " + str(end_idx))
                 for msg in self.song_tracks[start_idx:end_idx]:
+                    print("msg", msg)
                     # Exit thread if learning is stopped
                     if not self.is_started_midi:
                         break
