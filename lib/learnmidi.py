@@ -131,7 +131,7 @@ class LearnMIDI:
             self.usersettings.change_setting_value(
                 "hand_colorL", self.hand_colorL)
 
-    def get_led_color(handColors, brightness, alternative_color):
+    def get_led_color(self, handColors, brightness, alternative_color):
         red = int(
             handColors[0] * brightness)
         green = int(
@@ -338,10 +338,12 @@ class LearnMIDI:
                             if msg.channel == 1:
                                 red, green, blue = self.get_led_color(
                                     self.hand_colorList[self.hand_colorR], brightness, alternative_color)
-                            if msg.channel == 2:
+                            elif msg.channel == 2:
                                 red, green, blue = self.get_led_color(
                                     self.hand_colorList[self.hand_colorL], brightness, alternative_color)
-
+                            else:
+                                red, green, blue = self.get_led_color(
+                                    [127, 127, 127], brightness, alternative_color)
                             self.ledstrip.strip.setPixelColor(
                                 note_position, Color(green, red, blue))
                             self.ledstrip.strip.show()
