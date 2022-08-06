@@ -263,14 +263,17 @@ class LearnMIDI:
                     if not self.is_started_midi:
                         break
 
+                    print("1")
                     # Get time delay
                     tDelay = mido.tick2second(
                         msg.time, self.ticks_per_beat, self.song_tempo * 100 / self.set_tempo)
 
+                    print("2")
                     # set tempo
                     if msg.is_meta and msg.type == 'set_tempo':
                         self.song_tempo = msg.tempo
 
+                    print("3")
                     # Check notes to press
                     if not msg.is_meta:
                         try:
@@ -305,12 +308,14 @@ class LearnMIDI:
                             fastColorWipe(self.ledstrip.strip,
                                           True, self.ledsettings)
                             notes_to_press.clear()
+                    print("4")
 
                     # Realize time delay, consider also the time lost during computation
                     delay = max(0, tDelay - (
                         time.time() - time_prev) - 0.003)  # 0.003 sec calibratable to acount for extra time loss
                     time.sleep(delay)
                     time_prev = time.time()
+                    print("5")
 
                     # Light-up LEDs with the notes to press
                     if not msg.is_meta:
@@ -353,7 +358,9 @@ class LearnMIDI:
                                 # send midi sound for Right hand
                                 self.practice == 2):  # send midi sound for Listen only
                             self.midiports.playport.send(msg)
+                    print("6")
             except Exception as e:
+                print("Error: ", e)
                 self.is_started_midi = False
 
             if(not self.is_loop_active or self.is_started_midi == False):
